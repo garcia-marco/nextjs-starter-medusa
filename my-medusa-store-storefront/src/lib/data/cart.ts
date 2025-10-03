@@ -15,6 +15,29 @@ import {
 } from "./cookies"
 import { getRegion } from "./regions"
 
+export async function addOrderCommentToCart(
+  currentState: unknown,
+  formData: FormData
+) {
+  try {
+    if (!formData) {
+      throw new Error("Error formData")
+    }
+
+    const cart = await getOrSetCart("fr")
+
+    if (!cart) {
+      throw new Error("Error retrieving cart")
+    }
+
+    const comment = formData.get("comment") ? formData.get("comment") : null
+
+    await updateCart({ additional_data: { comment } })
+  } catch (e: any) {
+    return e.message
+  }
+}
+
 /**
  * Retrieves a cart by its ID. If no ID is provided, it will use the cart ID from the cookies.
  * @param cartId - optional - The ID of the cart to retrieve.
@@ -22,7 +45,8 @@ import { getRegion } from "./regions"
  */
 export async function retrieveCart(cartId?: string, fields?: string) {
   const id = cartId || (await getCartId())
-  fields ??= "*items, *region, *items.product, *items.variant, *items.thumbnail, *items.metadata, +items.total, *promotions, +shipping_methods.name"
+  fields ??=
+    "*items, *region, *items.product, *items.variant, *items.thumbnail, *items.metadata, +items.total, *promotions, +shipping_methods.name"
 
   if (!id) {
     return null
@@ -40,7 +64,7 @@ export async function retrieveCart(cartId?: string, fields?: string) {
     .fetch<HttpTypes.StoreCartResponse>(`/store/carts/${id}`, {
       method: "GET",
       query: {
-        fields
+        fields,
       },
       headers,
       next,
@@ -57,7 +81,7 @@ export async function getOrSetCart(countryCode: string) {
     throw new Error(`Region not found for country code: ${countryCode}`)
   }
 
-  let cart = await retrieveCart(undefined, 'id,region_id')
+  let cart = await retrieveCart(undefined, "id,region_id")
 
   const headers = {
     ...(await getAuthHeaders()),
