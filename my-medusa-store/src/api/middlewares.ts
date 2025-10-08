@@ -11,7 +11,8 @@ export default defineMiddlewares({
       additionalDataValidator: {
         comment: z
           .string()
-          .min(3, 'Custom message'),
+          // .min(3, { message: 'Custom message' })
+          .refine((data) => data.length >= 3, { message: "Custom message" }),
       },
     },
   ],
